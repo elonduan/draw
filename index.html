@@ -50,6 +50,7 @@
 
   let player = { x:120, y:300, vx:220, vy:0, radius:12, grounded:false };
   let running = true;
+  let loopActive = false;
   let lastT = performance.now()/1000;
 
   const scoreEl = document.getElementById('scoreG');
@@ -144,6 +145,10 @@
     }
     player.y = 300; player.vx = 220; player.vy = 0; player.grounded = false;
     updateScore();
+    if(!loopActive){
+      loopActive = true;
+      requestAnimationFrame(step);
+    }
   }
 
   reset(true);
@@ -206,7 +211,10 @@
       let dt = Math.min(0.034, now - lastT);
       lastT = now;
       
-      if (!running) return;
+      if (!running) {
+        loopActive = false;
+        return;
+      }
 
       // If counting down, just render and wait
       if (isCountingDown) {
@@ -229,11 +237,11 @@
       for(const p of platforms){ if(rectCollide(player.x, player.y, player.radius, p)){ if(player.y < p.y){ player.y = p.y - player.radius - 0.1; player.vy = Math.min(0, player.vy); player.grounded = true; } else { if(player.x < p.x + p.w/2) player.x = p.x - player.radius - 0.1; else player.x = p.x + p.w + player.radius + 0.1; player.vx = Math.min(player.vx, 600); } } }
 
       // collisions with spikes
-      for(const s of spikes){ if(rectCollide(player.x-9, player.y, player.radius, s)){ running = false; msgEl.textContent = 'You crashed! Press Restart.'; return; } }
-      for(const c of ceilingSpikes){ if(rectCollide(player.x, player.y, player.radius, c)){ running = false; msgEl.textContent = 'You hit the ceiling! Press Restart.'; return; } }
+      for(const s of spikes){ if(rectCollide(player.x-9, player.y, player.radius, s)){ running = false; loopActive = false; msgEl.textContent = 'You crashed! Press Restart.'; return; } }
+      for(const c of ceilingSpikes){ if(rectCollide(player.x, player.y, player.radius, c)){ running = false; loopActive = false; msgEl.textContent = 'You hit the ceiling! Press Restart.'; return; } }
 
       // fell off
-      if(player.y > H + 50){ running = false; msgEl.textContent = 'You fell off! Press Restart.'; return; }
+      if(player.y > H + 50){ running = false; loopActive = false; msgEl.textContent = 'You fell off! Press Restart.'; return; }
 
 
       // Level complete check
@@ -246,8 +254,6 @@
       render(camX);
       requestAnimationFrame(step);
     }
-
-  requestAnimationFrame(step);
 
   function render(camX){
     ctx.clearRect(0,0,W,H);
